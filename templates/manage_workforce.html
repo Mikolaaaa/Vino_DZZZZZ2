@@ -1,0 +1,12 @@
+<h1>Рабочая сила для объекта {{ obj.name }}</h1>
+<form method="POST">
+    <label>Часы работы:</label><br>
+    <input type="number" name="labor_hours" value="{{ workforce.labor_hours if workforce else 0 }}" required><br>
+    <label>Количество рабочих:</label><br>
+    <input type="number" name="workers" value="{{ workforce.workers if workforce else 0 }}" required><br>
+    <label>Дата начала:</label><br>
+    <input type="date" name="start_date" value="{{ workforce.start_date if workforce else '' }}" required><br>
+    <label>Дата окончания:</label><br>
+    <input type="date" name="end_date" value="{{ workforce.end_date if workforce else '' }}" required><br>
+    <button type="submit">Сохранить</button>
+</form>

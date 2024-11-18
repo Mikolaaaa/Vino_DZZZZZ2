@@ -1,0 +1,13 @@
+<h1>Комментарии для объекта {{ obj.name }}</h1>
+<ul>
+    {% for comment in comments %}
+    <li>{{ comment.user }}: {{ comment.text }}</li>
+    {% endfor %}
+</ul>
+<form method="POST">
+    <label>Имя пользователя:</label><br>
+    <input type="text" name="user" required><br>
+    <label>Комментарий:</label><br>
+    <textarea name="text" required></textarea><br>
+    <button type="submit">Добавить комментарий</button>
+</form>

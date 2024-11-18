@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Список объектов</title>
+</head>
+<body>
+    <h1>Список объектов</h1>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Адрес</th>
+            <th>Срок</th>
+            <th>Статус</th>
+            <th>Действия</th>
+        </tr>
+        {% for obj in objects %}
+        <tr>
+            <td>{{ obj.id }}</td>
+            <td>{{ obj.name }}</td>
+            <td>{{ obj.address }}</td>
+            <td>{{ obj.deadline }}</td>
+            <td>{{ obj.status }}</td>
+            <td>
+                <!-- Ссылки на новые функции -->
+                <a href="{{ url_for('manage_estimate', object_id=obj.id) }}">Смета</a> |
+                <a href="{{ url_for('comments', object_id=obj.id) }}">Комментарии</a> |
+                <a href="{{ url_for('manage_workforce', object_id=obj.id) }}">Рабочая сила</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{{ url_for('add_object') }}">Добавить объект</a>
+</body>
+</html>
