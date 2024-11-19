@@ -1,7 +1,0 @@
-<h1>Комментарии для объекта</h1>
-<ul>
-    {% for comment in comments %}
-    <li><strong>{{ comment.user }}</strong>: {{ comment.text }}</li>
-    {% endfor %}
-</ul>
-<a href="{{ url_for('comments', object_id=object_id) }}">Добавить комментарий</a>

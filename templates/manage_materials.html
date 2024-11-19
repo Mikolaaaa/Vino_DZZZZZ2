@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Материалы</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-container label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-container button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .form-container button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        h2 {
+            color: #333;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .material-list {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+        .material-list li {
+            background-color: #fff;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            width: 45%;
+            margin-bottom: 20px;
+        }
+        .material-list a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .material-list a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Материалы</h1>
+
+<div class="form-container">
+    <form method="POST">
+        <label for="name">Название:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="quantity">Количество (кг):</label>
+        <input type="number" id="quantity" name="quantity" required>
+
+        <label for="price">Цена (руб):</label>
+        <input type="number" step="0.01" id="price" name="price" required>
+
+        <label for="construction_object_id">ID объекта строительства:</label>
+        <input type="number" id="construction_object_id" name="construction_object_id" required>
+
+        <label for="supplier_id">ID поставщика:</label>
+        <input type="number" id="supplier_id" name="supplier_id" required>
+
+        <button type="submit">Добавить материал</button>
+    </form>
+</div>
+
+<h2>Список материалов:</h2>
+<ul class="material-list">
+    {% for material in materials %}
+    <li>
+        <a href="{{ url_for('manage_material', material_id=material.id) }}">{{ material.name }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>

@@ -1,35 +1,290 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Список объектов</title>
+    <style>
+        /* Ваши стили */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #000000;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        td a {
+            text-decoration: none;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            background-color: #007bff;
+            transition: background-color 0.3s, transform 0.2s ease;
+        }
+        td a:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        td a:active {
+            background-color: #003b73;
+        }
+        .add-object {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            width: 200px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .add-object:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        .add-object:active {
+            background-color: #1e7e34;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .action-btn:active {
+            background-color: #003b73;
+        }
+
+        .action-btn2 {
+            padding: 8px 15px;
+            background-color: #e50000;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .action-btn2:hover {
+            background-color: #e50000;
+            transform: scale(1.05);
+        }
+
+        .action-btn2:active {
+            background-color: #e50000;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none; /* Скрыто по умолчанию */
+            position: fixed;
+            z-index: 1; /* Поверх всего контента */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Темный фон */
+            overflow: auto;
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            max-height: 80vh;  /* Ограничим максимальную высоту окна */
+            overflow-y: auto;  /* Добавим прокрутку, если контент не помещается */
+        }
+        .modal-content input[type="text"],
+        .modal-content input[type="number"],
+        .modal-content input[type="date"],
+
+        .modal-content textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .modal-body input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-footer {
+            text-align: right;
+        }
+
+        .separator {
+            border-top: 5px solid black;
+        }
+
+        .actions-row {
+            border-bottom: 5px solid black; /* Линия между строками с действиями */
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>Список объектов</h1>
-    <table border="1">
-        <tr>
-            <th>ID</th>
-            <th>Название</th>
-            <th>Адрес</th>
-            <th>Срок</th>
-            <th>Статус</th>
-            <th>Действия</th>
-        </tr>
-        {% for obj in objects %}
-        <tr>
-            <td>{{ obj.id }}</td>
-            <td>{{ obj.name }}</td>
-            <td>{{ obj.address }}</td>
-            <td>{{ obj.deadline }}</td>
-            <td>{{ obj.status }}</td>
-            <td>
-                <!-- Ссылки на новые функции -->
-                <a href="{{ url_for('manage_estimate', object_id=obj.id) }}">Смета</a> |
-                <a href="{{ url_for('comments', object_id=obj.id) }}">Комментарии</a> |
-                <a href="{{ url_for('manage_workforce', object_id=obj.id) }}">Рабочая сила</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    <a href="{{ url_for('add_object') }}">Добавить объект</a>
+    <div class="container">
+        <h1>Список объектов</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Адрес</th>
+                    <th>Срок</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in objects %}
+                <tr>
+                    <td>{{ obj.id }}</td>
+                    <td>{{ obj.name }}</td>
+                    <td>{{ obj.address }}</td>
+                    <td>{{ obj.deadline }}</td>
+                    <td>{{ obj.status }}</td>
+                </tr>
+                <tr class="actions-row">
+                    <td colspan="6">
+                        <div class="actions">
+                            <a href="{{ url_for('manage_estimate', object_id=obj.id) }}" class="action-btn">Смета</a>
+                            <a href="{{ url_for('comments', object_id=obj.id) }}" class="action-btn">Комментарии</a>
+                            <a href="{{ url_for('manage_workforce', object_id=obj.id) }}" class="action-btn">Рабочая сила</a>
+                            <a href="{{ url_for('manage_suppliers', object_id=obj.id) }}" class="action-btn">Поставщики</a>
+                            <a href="{{ url_for('manage_materials', object_id=obj.id) }}" class="action-btn">Материалы</a>
+                            <a href="{{ url_for('delete_object', object_id=obj.id) }}" class="action-btn2" onclick="return confirm('Вы уверены, что хотите удалить этот объект?')">Удалить</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="javascript:void(0);" id="addObjectBtn" class="add-object">Добавить объект</a>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="addObjectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeModal">&times;</span>
+                <h2>Добавить новый объект</h2>
+            </div>
+            <form action="{{ url_for('add_object') }}" method="POST">
+                <div class="modal-body">
+                    <label for="objectName">Название объекта:</label>
+                    <input type="text" id="objectName" name="name" required>
+                    <label for="objectAddress">Адрес:</label>
+                    <input type="text" id="objectAddress" name="address" required>
+                    <label for="objectDeadline">Срок:</label>
+                    <input type="date" id="objectDeadline" name="deadline" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="add-object">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Получаем элементы
+        var modal = document.getElementById("addObjectModal");
+        var btn = document.getElementById("addObjectBtn");
+        var closeBtn = document.getElementById("closeModal");
+
+        // Открыть модальное окно
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // Закрыть модальное окно
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Закрыть окно, если пользователь кликает за его пределами
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
