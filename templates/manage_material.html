@@ -72,8 +72,8 @@
         <label for="price">Цена (руб):</label>
         <input type="number" step="0.01" id="price" name="price" value="{{ material.price }}" required>
 
-        <label for="construction_object_id">ID объекта строительства:</label>
-        <input type="number" id="construction_object_id" name="construction_object_id" value="{{ material.construction_object_id }}" required>
+        <label for="manufacturer">Произодитель материала:</label>
+        <input type="text" id="manufacturer" name="manufacturer" value="{{ material.manufacturer }}" required>
 
         <label for="supplier_id">ID поставщика:</label>
         <input type="number" id="supplier_id" name="supplier_id" value="{{ material.supplier_id }}" required>
@@ -84,6 +84,8 @@
     <form action="{{ url_for('manage_material', material_id=material.id) }}" method="POST" style="margin-top: 20px;">
         <button type="submit" name="_method" value="DELETE" class="delete-btn">Удалить материал</button>
     </form>
+    <p> </p>
+        <button type="submit" onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
 </div>
 
 </body>

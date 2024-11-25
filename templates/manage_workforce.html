@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Рабочая сила для объекта "{{ obj.name }}"</title>
+    <title>Бригада для объекта "{{ obj.name }}"</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,14 +12,14 @@
             padding: 0;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 30px auto;
             background-color: #ffffff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        h1 {
+        h1, h2 {
             text-align: center;
             color: #333;
             margin-bottom: 20px;
@@ -32,7 +32,7 @@
             font-size: 16px;
             color: #555;
         }
-        input[type="number"], input[type="date"] {
+        input[type="number"], input[type="text"], input[type="date"] {
             width: 100%;
             padding: 10px;
             font-size: 16px;
@@ -40,7 +40,7 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-        input[type="number"]:focus, input[type="date"]:focus {
+        input[type="number"]:focus, input[type="text"]:focus, input[type="date"]:focus {
             border-color: #007BFF;
             outline: none;
         }
@@ -64,19 +64,35 @@
         .form-group input {
             margin-top: 5px;
         }
+        table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+        }
+        table th, table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        table th {
+            background-color: #f4f4f9;
+        }
+        table td {
+            background-color: #ffffff;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Рабочая сила для объекта "{{ obj.name }}"</h1>
+        <h1>Бригада для объекта "{{ obj.name }}"</h1>
         <form method="POST">
             <div class="form-group">
-                <label for="labor_hours">Часы работы:</label>
-                <input type="number" id="labor_hours" name="labor_hours" value="{{ workforce.labor_hours if workforce else 0 }}" required>
+                <label for="kval">Квалификация:</label>
+                <input type="text" id="kval" name="kval" value="{{ workforce.kval if workforce else '' }}" required>
             </div>
             <div class="form-group">
-                <label for="workers">Количество рабочих:</label>
+                <label for="workers">Количество рабочих в бригаде:</label>
                 <input type="number" id="workers" name="workers" value="{{ workforce.workers if workforce else 0 }}" required>
             </div>
             <div class="form-group">
@@ -87,8 +103,32 @@
                 <label for="end_date">Дата окончания:</label>
                 <input type="date" id="end_date" name="end_date" value="{{ workforce.end_date if workforce else '' }}" required>
             </div>
-            <button type="submit">Сохранить</button>
+            <button type="submit">Добавить бригаду</button>
         </form>
+
+        <h2>Список бригад</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Квалификация</th>
+                    <th>Количество рабочих</th>
+                    <th>Дата начала</th>
+                    <th>Дата окончания</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for workforce in workforces %}
+                <tr>
+                    <td>{{ workforce.kval }}</td>
+                    <td>{{ workforce.workers }}</td>
+                    <td>{{ workforce.start_date }}</td>
+                    <td>{{ workforce.end_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
     </div>
 
 </body>

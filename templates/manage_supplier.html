@@ -76,15 +76,23 @@
         <label for="contact_info">Контактная информация:</label>
         <input type="text" id="contact_info" name="contact_info" value="{{ supplier.contact_info }}" required>
 
+        <label for="type_of_materials">Тип материалов:</label>
+        <input type="text" id="type_of_materials" name="type_of_materials" value="{{ supplier.type_of_materials }}" required>
+
+
         <label for="address">Адрес:</label>
         <input type="text" id="address" name="address" value="{{ supplier.address }}" required>
 
         <button type="submit">Сохранить изменения</button>
     </form>
+    <p> </p>
+        <button type="submit" onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
 </div>
 
 <form action="{{ url_for('manage_supplier', supplier_id=supplier.id) }}" method="POST" style="margin-top: 20px;">
-    <button type="submit" name="_method" value="DELETE" class="delete-btn">Удалить поставщика</button>
+    <!-- Скрытое поле для метода DELETE -->
+    <input type="hidden" name="_method" value="DELETE">
+    <button type="submit" class="delete-btn">Удалить поставщика</button>
 </form>
 
 </body>

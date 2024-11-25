@@ -88,14 +88,21 @@
         <label for="name">Название:</label>
         <input type="text" id="name" name="name" required>
 
-        <label for="contact_info">Контактная информация:</label>
-        <input type="text" id="contact_info" name="contact_info" required>
-
         <label for="address">Адрес:</label>
         <input type="text" id="address" name="address" required>
 
+        <label for="contact_info">Контактная информация:</label>
+        <input type="text" id="contact_info" name="contact_info" required>
+
+        <label for="type_of_materials">Тип материалов:</label>
+        <input type="text" id="type_of_materials" name="type_of_materials" required>
+
+
         <button type="submit">Добавить поставщика</button>
     </form>
+    <p> </p>
+        <button type="submit" onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
+
 </div>
 
 <h2>Список поставщиков:</h2>

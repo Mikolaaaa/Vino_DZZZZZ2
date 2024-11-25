@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Материалы</title>
+    <title>Складские материалы</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -81,7 +81,7 @@
 </head>
 <body>
 
-<h1>Материалы</h1>
+<h1>Складские материалы</h1>
 
 <div class="form-container">
     <form method="POST">
@@ -91,24 +91,26 @@
         <label for="quantity">Количество (кг):</label>
         <input type="number" id="quantity" name="quantity" required>
 
-        <label for="price">Цена (руб):</label>
+        <label for="price">Цена (руб за кг):</label>
         <input type="number" step="0.01" id="price" name="price" required>
 
-        <label for="construction_object_id">ID объекта строительства:</label>
-        <input type="number" id="construction_object_id" name="construction_object_id" required>
+        <label for="manufacturer">Произодитель материала:</label>
+        <input type="text" id="manufacturer" name="manufacturer" required>
 
         <label for="supplier_id">ID поставщика:</label>
         <input type="number" id="supplier_id" name="supplier_id" required>
 
         <button type="submit">Добавить материал</button>
     </form>
+    <p> </p>
+        <button type="submit" onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
 </div>
 
 <h2>Список материалов:</h2>
 <ul class="material-list">
     {% for material in materials %}
     <li>
-        <a href="{{ url_for('manage_material', material_id=material.id) }}">{{ material.name }}</a>
+        <a href="{{ url_for('manage_material', material_id=material.id) }}">{{ material.name }} {{ material.quantity }}кг {{ material.price }}руб/кг ({{ material.manufacturer }})</a>
     </li>
     {% endfor %}
 </ul>

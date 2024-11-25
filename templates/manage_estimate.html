@@ -108,6 +108,14 @@
         .material-row button {
             width: 10%;
         }
+
+        .remaining-materials {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -115,82 +123,152 @@
     <div class="container">
         <h1>Смета для объекта "{{ obj.name }}"</h1>
 
-        <form method="POST">
-            <!-- Материалы (доступные для выбора) -->
-            <div class="form-group">
-                <label for="available_materials">Выберите материалы:</label>
-                <select id="available_materials" name="materials" multiple size="8">
+    <form method="POST">
+        <div class="form-group">
+            <label for="available_materials">Выберите материалы:</label>
+            <select id="available_materials" name="materials" multiple size="8">
+                {% for material in materials %}
+                    <option value="{{ material.id }}" data-price="{{ material.price }}" data-quantity="{{ material.quantity }}">
+                        {{ material.name }} - {{ material.quantity }} ({{ material.price }} руб.)
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="material_quantity">Количество:</label>
+            <input type="number" id="material_quantity" name="material_quantity" value="1" min="1">
+        </div>
+
+        <button type="button" id="addMaterialBtn">Добавить материал</button>
+
+        <div class="form-group">
+            <label for="material_type">Типы материалов:</label>
+            <select id="material_type" name="material_type[]" multiple size="4">
+                <!-- Сюда будут добавляться выбранные материалы с количеством -->
+                {% for material_id, display_name in material_options.items() %}
+                    <option value="{{ material_id }}">
+                        {{ display_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+
+        <div class="remaining-materials">
+            <h3>Оставшиеся материалы:</h3>
+            <table id="remaining-materials-table">
+                <thead>
+                    <tr>
+                        <th>Материал</th>
+                        <th>Оставшееся количество</th>
+                    </tr>
+                </thead>
+                <tbody>
                     {% for material in materials %}
-                        <option value="{{ material.id }}" data-price="{{ material.price }}" data-quantity="{{ material.quantity }}" data-types="{{ material.types|join(',') }}">
-                            {{ material.name }} - {{ material.quantity }} ({{ material.price }} руб.)
-                        </option>
+                    <tr id="material-row-{{ material.id }}">
+                        <td>{{ material.name }}</td>
+                        <td id="remaining-quantity-{{ material.id }}">{{ material.quantity }}</td>
+                    </tr>
                     {% endfor %}
-                </select>
-            </div>
+                </tbody>
+            </table>
+        </div>
 
-            <!-- Типы материалов -->
-            <div class="form-group">
-                <label for="material_type">Типы материалов:</label>
-                <select id="material_type" name="material_type[]" multiple size="4">
-                    {% if estimate and estimate.material_type %}
-                        {% for type_id in estimate.material_type %}
-                            <option value="{{ type_id }}" selected>
-                                {{ material_options[type_id] if type_id in material_options else "Неизвестный материал" }}
-                            </option>
-                        {% endfor %}
-                    {% endif %}
-                    {% for material_id, display_name in material_options.items() %}
-                        {% if material_id not in estimate.material_type %}
-                            <option value="{{ material_id }}">
-                                {{ display_name }}
-                            </option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
+        <div class="form-group">
+            <label for="labor_hours">Часы работы:</label>
+            <input type="number" id="labor_hours" name="labor_hours" value="{{ estimate.labor_hours if estimate else 0 }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="total_cost">Итоговая стоимость:</label>
+            <input type="number" id="total_cost" name="total_cost" value="{{ total_cost if total_cost else 0.0 }}" required readonly>
+        </div>
+            <!-- Кнопка для расчета итоговой стоимости -->
+        <button type="button" id="calculate_cost" onclick="calculateCost()">Рассчитать стоимость</button>
 
 
-            <!-- Часы работы -->
-            <div class="form-group">
-                <label for="labor_hours">Часы работы:</label>
-                <input type="number" id="labor_hours" name="labor_hours" value="{{ estimate.labor_hours if estimate else 0 }}" required>
-            </div>
+        <button type="submit">Сохранить</button>
+    </form>
 
-            <!-- Итоговая стоимость -->
-            <div class="form-group">
-                <label for="total_cost">Итоговая стоимость:</label>
-                <input type="number" id="total_cost" name="total_cost" value="{{ estimate.total_cost if estimate else 0.0 }}" required readonly>
-            </div>
-
-            <button type="submit">Сохранить</button>
-        </form>
 
         <a href="{{ url_for('manage_materials') }}">Перейти к управлению материалами</a>
+        <p> </p>
+        <button type="submit" onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
     </div>
 
     <script>
+
+        document.getElementById("addMaterialBtn").addEventListener("click", function() {
+            const selectedOptions = Array.from(availableMaterials.selectedOptions);
+            selectedOptions.forEach(option => {
+                const materialId = option.value;
+                const materialName = option.textContent.split(' - ')[0];
+                const materialQuantity = parseInt(document.getElementById("material_quantity").value);
+                const materialPrice = option.getAttribute("data-price");
+
+                // Добавляем материал в список типов материалов
+                const materialTypeOption = document.createElement("option");
+                materialTypeOption.value = materialId;
+                materialTypeOption.textContent = `${materialName} - ${materialQuantity} шт. (${materialPrice} руб.)`;
+
+                document.getElementById("material_type").appendChild(materialTypeOption); // добавляем в select
+            });
+        });
+
         document.addEventListener("DOMContentLoaded", function() {
             const availableMaterials = document.getElementById("available_materials");
-            const materialTypesSelect = document.getElementById("material_type");
+            const materialTypeSelect = document.getElementById("material_type");
+            const addMaterialBtn = document.getElementById("addMaterialBtn");
+            const materialQuantityInput = document.getElementById("material_quantity");
+            const remainingMaterialsTable = document.getElementById("remaining-materials-table");
 
-            // Функция для добавления типа материала в select
-            function addMaterialType() {
+            // Функция для добавления материала в список типов материалов
+            function addMaterialToList(materialId, materialName, materialQuantity, materialPrice) {
+                const newOption = document.createElement("option");
+                newOption.value = materialId;
+                newOption.textContent = `${materialName} - ${materialQuantity} шт. (${materialPrice} руб.)`;
+                materialTypeSelect.appendChild(newOption);
+            }
+
+            // Функция для обновления оставшихся материалов
+            function updateRemainingMaterials() {
                 const selectedOptions = Array.from(availableMaterials.selectedOptions);
-
-                // Для каждого выбранного материала добавляем его тип
                 selectedOptions.forEach(option => {
-                    const materialTypeOption = document.createElement("option");
-                    materialTypeOption.value = option.value;
-                    materialTypeOption.textContent = option.textContent; // Используем текст из выбранного материала
-                    materialTypesSelect.appendChild(materialTypeOption);
+                    const materialId = option.value;
+                    const remainingQuantity = document.getElementById("remaining-quantity-" + materialId);
+                    const quantitySelected = parseInt(materialQuantityInput.value);
+                    remainingQuantity.innerText = parseInt(remainingQuantity.innerText) - quantitySelected;
                 });
             }
 
-            // Обработчик для изменения выбора материалов
-            availableMaterials.addEventListener("change", function() {
-                // Очищаем список типов материалов перед добавлением новых
-                materialTypesSelect.innerHTML = "";
-                addMaterialType();  // Добавляем материалы в список типов
+            // Обработчик для добавления материала в список типов
+            addMaterialBtn.addEventListener("click", function() {
+                const selectedOptions = Array.from(availableMaterials.selectedOptions);
+                selectedOptions.forEach(option => {
+                    const materialId = option.value;
+                    const materialName = option.textContent.split(' - ')[0];
+                    const materialQuantity = parseInt(materialQuantityInput.value);
+                    const materialPrice = option.getAttribute("data-price");
+
+                    addMaterialToList(materialId, materialName, materialQuantity, materialPrice);
+                    updateRemainingMaterials();  // Обновление оставшихся материалов
+                });
+            });
+
+            // Кнопка для расчета стоимости
+            const calculateCostBtn = document.getElementById("calculate_cost_btn");
+            calculateCostBtn.addEventListener("click", function() {
+                let totalCost = 0;
+
+                const selectedOptions = Array.from(availableMaterials.selectedOptions);
+                selectedOptions.forEach(option => {
+                    const price = parseFloat(option.getAttribute("data-price"));
+                    const quantity = parseInt(document.getElementById("material_quantity").value);
+                    totalCost += price * quantity;
+                });
+
+                totalCostInput.value = totalCost; // Обновляем итоговую стоимость
             });
         });
     </script>

@@ -85,15 +85,13 @@
         <!-- Форма добавления комментария -->
         <form method="POST">
             <div class="form-group">
-                <label for="user">Имя пользователя:</label>
-                <input type="text" id="user" name="user" required>
-            </div>
-            <div class="form-group">
                 <label for="text">Комментарий:</label>
                 <textarea id="text" name="text" rows="4" required></textarea>
             </div>
             <button type="submit">Добавить комментарий</button>
         </form>
+    <p> </p>
+        <button type="submit" onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
     </div>
 
 </body>
