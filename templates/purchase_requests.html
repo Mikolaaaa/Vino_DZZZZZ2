@@ -84,15 +84,23 @@
 
 <div class="form-container">
     <form method="POST">
-        <label for="material_id">Материал:</label>
-        <select id="material_id" name="material_id" required>
-            {% for material in materials %}
-                <option value="{{ material.id }}">{{ material.name }}</option>
+        <label for="material">Материал:</label>
+        <input type="text" id="material" name="material" required>
+
+
+        <label for="quantity">Количество (кг):</label>
+        <input type="number" id="quantity" name="quantity" required>
+
+        <label for="price">Цена (руб за кг):</label>
+        <input type="number" id="price" name="price" required>
+
+
+        <label for="supplier_id">Поставщик:</label>
+        <select id="supplier_id" name="supplier_id" required>
+            {% for supplier in suppliers %}
+                <option value="{{ supplier.id }}">{{ supplier.name }}</option>
             {% endfor %}
         </select>
-
-        <label for="quantity">Количество:</label>
-        <input type="number" id="quantity" name="quantity" required>
 
         <label for="status">Статус:</label>
         <select id="status" name="status" required>
@@ -113,16 +121,20 @@
         <tr>
             <th>Материал</th>
             <th>Количество</th>
+            <th>Цена</th>
+            <th>Поставщик</th>
             <th>Статус</th>
             <th>Дата запроса</th>
-            <th>Действия</th>
+            <th>Изменение статуса</th>
         </tr>
     </thead>
     <tbody>
         {% for request in purchase_requests %}
         <tr>
-            <td>{{ request.material().name }}</td>
+            <td>{{ request.material }}</td>
             <td>{{ request.quantity }}</td>
+            <td>{{ request.price }}</td>
+            <td>{{ request.supplier_id }}</td>
             <td>{{ request.status }}</td>
             <td>{{ request.request_date }}</td>
             <td>

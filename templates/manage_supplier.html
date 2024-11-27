@@ -74,14 +74,14 @@
         <input type="text" id="name" name="name" value="{{ supplier.name }}" required>
 
         <label for="contact_info">Контактная информация:</label>
-        <input type="text" id="contact_info" name="contact_info" value="{{ supplier.contact_info }}" required>
+        <input type="text" id="contact_info" name="contact_info" value="{{ supplier.type_of_materials }}" required>
 
         <label for="type_of_materials">Тип материалов:</label>
-        <input type="text" id="type_of_materials" name="type_of_materials" value="{{ supplier.type_of_materials }}" required>
+        <input type="text" id="type_of_materials" name="type_of_materials" value="{{ supplier.address }}" required>
 
 
         <label for="address">Адрес:</label>
-        <input type="text" id="address" name="address" value="{{ supplier.address }}" required>
+        <input type="text" id="address" name="address" value="{{ supplier.contact_info }}" required>
 
         <button type="submit">Сохранить изменения</button>
     </form>

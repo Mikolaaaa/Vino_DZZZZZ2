@@ -230,6 +230,15 @@ class Workforce:
             cursor = conn.execute(f"SELECT * FROM {cls._table_name} WHERE object_id = ?", (object_id,))
             return [cls(*row) for row in cursor.fetchall()]
 
+    def delete(self):
+        """Удаляет бригаду из базы данных по ее ID."""
+        if self.id is None:
+            raise ValueError("Невозможно удалить бригаду без ID.")
+
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute(f"DELETE FROM {self._table_name} WHERE id = ?", (self.id,))
+            self.id = None
+
 
 class Supplier:
     _table_name = "suppliers"
@@ -288,30 +297,32 @@ class Supplier:
 class PurchaseRequest:
     _table_name = "purchase_requests"
 
-    def __init__(self, id=None, material_id=None, quantity=None, status="Ожидает", request_date=None):
+    def __init__(self, id=None, material=None, quantity=None, price=None, supplier_id=None, status="Ожидает", request_date=None):
         self.id = id
-        self.material_id = material_id
+        self.material = material
         self.quantity = quantity
+        self.price = price
+        self.supplier_id = supplier_id
         self.status = status
         self.request_date = request_date
 
     def material(self):
-        return Material.find(self.material_id)
+        return Material.find(self.material)
 
     def save(self):
         with sqlite3.connect(DB_PATH) as conn:
             if self.id is None:
                 cursor = conn.execute(f"""
-                    INSERT INTO {self._table_name} (material_id, quantity, status, request_date)
-                    VALUES (?, ?, ?, ?)
-                """, (self.material_id, self.quantity, self.status, self.request_date))
+                    INSERT INTO {self._table_name} (material, quantity, price, supplier_id, status, request_date)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (self.material, self.quantity, self.price, self.supplier_id, self.status, self.request_date))
                 self.id = cursor.lastrowid
             else:
                 conn.execute(f"""
                     UPDATE {self._table_name}
-                    SET material_id = ?, quantity = ?, status = ?, request_date = ?
+                    SET material = ?, quantity = ?, price = ?, supplier_id = ?, status = ?, request_date = ?
                     WHERE id = ?
-                """, (self.material_id, self.quantity, self.status, self.request_date, self.id))
+                """, (self.material, self.quantity, self.price, self.supplier_id, self.status, self.request_date, self.id))
 
     @classmethod
     def all(cls):

@@ -10,11 +10,13 @@ def initialize_database():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS purchase_requests (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                material_id INTEGER NOT NULL,
+                material TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
+                price INTEGER NOT NULL,
+                supplier_id INTEGER NOT NULL,
                 status TEXT NOT NULL DEFAULT 'Ожидает',
                 request_date TEXT NOT NULL,
-                FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE CASCADE
+                FOREIGN KEY (supplier_id) REFERENCES supplier(id) ON DELETE CASCADE
                     )
                 """)
         # Таблица пользователей

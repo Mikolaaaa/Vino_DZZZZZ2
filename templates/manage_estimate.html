@@ -126,7 +126,7 @@
     <form method="POST">
         <div class="form-group">
             <label for="available_materials">Выберите материалы:</label>
-            <select id="available_materials" name="materials" multiple size="8">
+            <select id="available_materials" name="materials" required>
                 {% for material in materials %}
                     <option value="{{ material.id }}" data-price="{{ material.price }}" data-quantity="{{ material.quantity }}">
                         {{ material.name }} - {{ material.quantity }} ({{ material.price }} руб.)
@@ -142,18 +142,13 @@
 
         <button type="button" id="addMaterialBtn">Добавить материал</button>
 
-        <div class="form-group">
-            <label for="material_type">Типы материалов:</label>
-            <select id="material_type" name="material_type[]" multiple size="4">
-                <!-- Сюда будут добавляться выбранные материалы с количеством -->
-                {% for material_id, display_name in material_options.items() %}
-                    <option value="{{ material_id }}">
-                        {{ display_name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
+        <select id="material_type" name="materials[]" multiple size="4">
+            {% for reserve in reserve_estimates %}
+                <option value="{{ reserve.id }}">
+                    {{ reserve.name }} - {{ reserve.quantity }} шт. ({{ reserve.price }} руб.)
+                </option>
+            {% endfor %}
+        </select>
 
         <div class="remaining-materials">
             <h3>Оставшиеся материалы:</h3>
@@ -165,32 +160,23 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for material in materials %}
-                    <tr id="material-row-{{ material.id }}">
-                        <td>{{ material.name }}</td>
-                        <td id="remaining-quantity-{{ material.id }}">{{ material.quantity }}</td>
-                    </tr>
+                    {% for material_id, remaining_quantity in remaining_materials.items() %}
+                        <tr id="remaining-quantity-{{ material_id }}">
+                            <td>{{ (materials | selectattr("id", "equalto", material_id) | first).name }}</td>
+                            <td>{{ remaining_quantity }}</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
         <div class="form-group">
-            <label for="labor_hours">Часы работы:</label>
-            <input type="number" id="labor_hours" name="labor_hours" value="{{ estimate.labor_hours if estimate else 0 }}" required>
-        </div>
-
-        <div class="form-group">
             <label for="total_cost">Итоговая стоимость:</label>
-            <input type="number" id="total_cost" name="total_cost" value="{{ total_cost if total_cost else 0.0 }}" required readonly>
+            <input type="number" id="total_cost" name="total_cost" value="{{ total_reserve_cost }}" readonly>
         </div>
-            <!-- Кнопка для расчета итоговой стоимости -->
-        <button type="button" id="calculate_cost" onclick="calculateCost()">Рассчитать стоимость</button>
-
 
         <button type="submit">Сохранить</button>
     </form>
-
 
         <a href="{{ url_for('manage_materials') }}">Перейти к управлению материалами</a>
         <p> </p>
@@ -200,77 +186,22 @@
     <script>
 
         document.getElementById("addMaterialBtn").addEventListener("click", function() {
-            const selectedOptions = Array.from(availableMaterials.selectedOptions);
-            selectedOptions.forEach(option => {
-                const materialId = option.value;
-                const materialName = option.textContent.split(' - ')[0];
-                const materialQuantity = parseInt(document.getElementById("material_quantity").value);
-                const materialPrice = option.getAttribute("data-price");
+            const selectedOption = document.getElementById("available_materials").selectedOptions[0];
+            const materialId = selectedOption.value;
+            const materialName = selectedOption.textContent.split(' - ')[0];
+            const quantity = parseInt(document.getElementById("material_quantity").value);
 
-                // Добавляем материал в список типов материалов
-                const materialTypeOption = document.createElement("option");
-                materialTypeOption.value = materialId;
-                materialTypeOption.textContent = `${materialName} - ${materialQuantity} шт. (${materialPrice} руб.)`;
+            const materialTypeOption = document.createElement("option");
+            materialTypeOption.value = materialId;
+            materialTypeOption.textContent = `${materialName} - ${quantity} шт.`;
 
-                document.getElementById("material_type").appendChild(materialTypeOption); // добавляем в select
-            });
+            document.getElementById("material_type").appendChild(materialTypeOption);
+
+            // Обновление оставшихся материалов
+            const remainingCell = document.getElementById("remaining-quantity-" + materialId);
+            remainingCell.textContent = parseInt(remainingCell.textContent) - quantity;
         });
 
-        document.addEventListener("DOMContentLoaded", function() {
-            const availableMaterials = document.getElementById("available_materials");
-            const materialTypeSelect = document.getElementById("material_type");
-            const addMaterialBtn = document.getElementById("addMaterialBtn");
-            const materialQuantityInput = document.getElementById("material_quantity");
-            const remainingMaterialsTable = document.getElementById("remaining-materials-table");
-
-            // Функция для добавления материала в список типов материалов
-            function addMaterialToList(materialId, materialName, materialQuantity, materialPrice) {
-                const newOption = document.createElement("option");
-                newOption.value = materialId;
-                newOption.textContent = `${materialName} - ${materialQuantity} шт. (${materialPrice} руб.)`;
-                materialTypeSelect.appendChild(newOption);
-            }
-
-            // Функция для обновления оставшихся материалов
-            function updateRemainingMaterials() {
-                const selectedOptions = Array.from(availableMaterials.selectedOptions);
-                selectedOptions.forEach(option => {
-                    const materialId = option.value;
-                    const remainingQuantity = document.getElementById("remaining-quantity-" + materialId);
-                    const quantitySelected = parseInt(materialQuantityInput.value);
-                    remainingQuantity.innerText = parseInt(remainingQuantity.innerText) - quantitySelected;
-                });
-            }
-
-            // Обработчик для добавления материала в список типов
-            addMaterialBtn.addEventListener("click", function() {
-                const selectedOptions = Array.from(availableMaterials.selectedOptions);
-                selectedOptions.forEach(option => {
-                    const materialId = option.value;
-                    const materialName = option.textContent.split(' - ')[0];
-                    const materialQuantity = parseInt(materialQuantityInput.value);
-                    const materialPrice = option.getAttribute("data-price");
-
-                    addMaterialToList(materialId, materialName, materialQuantity, materialPrice);
-                    updateRemainingMaterials();  // Обновление оставшихся материалов
-                });
-            });
-
-            // Кнопка для расчета стоимости
-            const calculateCostBtn = document.getElementById("calculate_cost_btn");
-            calculateCostBtn.addEventListener("click", function() {
-                let totalCost = 0;
-
-                const selectedOptions = Array.from(availableMaterials.selectedOptions);
-                selectedOptions.forEach(option => {
-                    const price = parseFloat(option.getAttribute("data-price"));
-                    const quantity = parseInt(document.getElementById("material_quantity").value);
-                    totalCost += price * quantity;
-                });
-
-                totalCostInput.value = totalCost; // Обновляем итоговую стоимость
-            });
-        });
     </script>
 
 </body>
