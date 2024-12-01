@@ -5,16 +5,9 @@ import sqlite3
 from flask_login import login_required, login_user, logout_user, LoginManager, current_user
 from init_db import initialize_database
 from flask import flash
-from gateway import (
-    ConstructionObjectGateway,
-    MaterialGateway,
-    ReserveEstimateGateway,
-    EstimateGateway,
-    CommentGateway,
-    WorkforceGateway,
-    SupplierGateway,
-    PurchaseRequestGateway,
-    UserGateway
+from table_module import (
+    CommentTable, PurchaseRequestTable, SupplierTable, PurchaseRequestTable,
+    WorkforceTable, ReserveEstimateTable, ConstructionObjectTable, UserTable, MaterialTable
 )
 
 app = Flask(__name__)
@@ -30,7 +23,7 @@ login_manager.login_message = "Пожалуйста, войдите, чтобы 
 @app.route("/")
 @login_required
 def index():
-    objects = ConstructionObjectGateway.get_all_objects()
+    objects = ConstructionObjectTable.get_all()
     return render_template("index.html", objects=objects)
 
 
@@ -39,8 +32,10 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        print(f"username {username}")
 
-        user = UserGateway.find_by_username(username)
+        user = UserTable.get_by_username(username)
+        print(f"Found user: {user}")
         if user and user.password == password:
             login_user(user)
             flash("Вы успешно вошли в систему.", "success")
@@ -61,7 +56,7 @@ def logout():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return UserGateway.find_by_id(user_id)  # Убедитесь, что метод `find_by_id` существует в классе `User`.
+    return UserTable.get_by_id(user_id)
 
 
 @app.route("/add", methods=["GET", "POST"])
@@ -71,7 +66,7 @@ def add_object():
         name = request.form["name"]
         address = request.form["address"]
         deadline = request.form["deadline"]
-        ConstructionObjectGateway.create_object(name=name, address=address, deadline=deadline)
+        ConstructionObjectTable.save(name, address, deadline)
         return redirect(url_for("index"))
     return render_template("add_object.html")
 
@@ -79,10 +74,10 @@ def add_object():
 @app.route("/update_status/<int:object_id>", methods=["POST"])
 @login_required
 def update_status(object_id):
-    obj = ConstructionObjectGateway.get_object_by_id(object_id)
+    obj = ConstructionObjectTable.get_by_id(object_id)
     if obj:
         new_status = request.form.get("status")  # Получаем новый статус
-        ConstructionObjectGateway.update_object_status(object_id, new_status)
+        ConstructionObjectTable.update(object_id, new_status)
         flash(f"Статус объекта {obj.name} успешно обновлен на {new_status}.", "success")
     else:
         flash("Объект не найден.", "danger")
@@ -93,10 +88,10 @@ def update_status(object_id):
 @login_required
 def delete_object(object_id):
     # Найти объект в базе данных по ID
-    obj = ConstructionObjectGateway.get_object_by_id(object_id)
+    obj = ConstructionObjectTable.get_by_id(object_id)
 
     if obj:
-        ConstructionObjectGateway.delete_object(object_id)  # Удалить объект
+        ConstructionObjectTable.delete(object_id)  # Удалить объект
 
     return redirect(url_for('index'))  # Перенаправить на главную страницу
 
@@ -107,10 +102,10 @@ def delete_workforce(worforce_id, object_id):
     print(worforce_id)
     print(f"object_id {object_id}")
 
-    WorkforceGateway.delete_workforce(worforce_id)  # Удалить объект
+    WorkforceTable.delete(worforce_id)  # Удалить объект
 
-    obj = ConstructionObjectGateway.get_object_by_id(object_id)
-    workforces = WorkforceGateway.get_workforce_by_object(object_id)
+    obj = ConstructionObjectTable.get_by_id(object_id)
+    workforces = WorkforceTable.get_by_id(object_id)
 
     return render_template("manage_workforce.html", obj=obj, workforces=workforces)
 
@@ -118,17 +113,17 @@ def delete_workforce(worforce_id, object_id):
 @app.route("/api/objects", methods=["GET"])
 @login_required
 def get_objects():
-    objects = [vars(obj) for obj in ConstructionObjectGateway.get_all_objects()]
+    objects = [vars(obj) for obj in ConstructionObjectTable.get_all()]
     return jsonify(objects)
 
 
 @app.route("/estimate/<int:object_id>", methods=["GET", "POST"])
 @login_required
 def manage_estimate(object_id):
-    estimate = EstimateGateway.get_estimate_by_object(object_id)
-    obj = ConstructionObjectGateway.get_object_by_id(object_id)
-    materials = MaterialGateway.get_all_materials()  # Получаем все материалы
-    reserve_estimates = ReserveEstimateGateway.get_reserve_estimate_by_id(object_id)  # Резервные материалы
+    obj = ConstructionObjectTable.get_by_id(object_id)
+    materials = MaterialTable.get_all()  # Получаем все материалы
+    reserve_estimates = ReserveEstimateTable.get_by_id(object_id)  # Резервные материалы
+    print(f"reserve_estimates {reserve_estimates}")
 
     # Вычисление оставшихся материалов
     remaining_materials = {}
@@ -157,11 +152,11 @@ def manage_estimate(object_id):
             material_quantity = int(material_quantity)  # Преобразуем количество в integer
 
             # Получаем материал из базы
-            mat = MaterialGateway.get_material_by_id(material_id)
+            mat = MaterialTable.get_by_id(material_id)
 
             if material_id and material_quantity > 0:
                 # Обновляем или добавляем резервный материал
-                ReserveEstimateGateway.create_reserve_estimate(
+                ReserveEstimateTable.save(
                     name=mat.name,
                     quantity=material_quantity,
                     price=mat.price,
@@ -188,22 +183,22 @@ def manage_estimate(object_id):
 @app.route("/comments/<int:object_id>", methods=["GET", "POST"])
 @login_required
 def comments(object_id):
-    obj = ConstructionObjectGateway.get_object_by_id(object_id)
+    obj = ConstructionObjectTable.get_by_id(object_id)
 
     if request.method == "POST":
         user = current_user.desc
         text = request.form["text"]
-        CommentGateway.create_comment(object_id=object_id, user=user, text=text)
+        CommentTable.save(object_id=object_id, user=user, text=text)
         return redirect(url_for("comments", object_id=object_id))
-    comments = CommentGateway.get_comments_by_object(object_id)
+    comments = CommentTable.get_by_id(object_id)
     return render_template("comments.html", obj=obj, comments=comments)
 
 
 @app.route("/workforce/<int:object_id>", methods=["GET", "POST"])
 @login_required
 def manage_workforce(object_id):
-    obj = ConstructionObjectGateway.get_object_by_id(object_id)
-    workforces = WorkforceGateway.get_workforce_by_object(object_id)  # Получаем все бригады для объекта
+    obj = ConstructionObjectTable.get_by_id(object_id)
+    workforces = WorkforceTable.get_by_id(object_id)  # Получаем все бригады для объекта
 
     if request.method == "POST":
         kval = request.form["kval"]
@@ -211,7 +206,7 @@ def manage_workforce(object_id):
         start_date = request.form["start_date"]
         end_date = request.form["end_date"]
 
-        WorkforceGateway.create_workforce(object_id=object_id, kval=kval, workers=workers, start_date=start_date, end_date=end_date)
+        WorkforceTable.save(object_id=object_id, kval=kval, workers=workers, start_date=start_date, end_date=end_date)
         return redirect(url_for("manage_workforce", object_id=object_id))
 
     return render_template("manage_workforce.html", obj=obj, workforces=workforces)
@@ -226,36 +221,34 @@ def manage_suppliers():
         contact_info = request.form["contact_info"]
         type_of_materials = request.form["type_of_materials"]
         address = request.form["address"]
-        print(111111)
-        print(name, address, contact_info, type_of_materials)
-        SupplierGateway.create_supplier(name=name, address=address, contact_info=contact_info, type_of_materials=type_of_materials)
+        SupplierTable.save(name=name, address=address, contact_info=contact_info, type_of_materials=type_of_materials)
         return redirect(url_for("manage_suppliers"))
 
-    suppliers = SupplierGateway.get_all_suppliers()
+    suppliers = SupplierTable.get_all()
     return render_template("manage_suppliers.html", suppliers=suppliers)
 
 
 @app.route("/supplier/<int:supplier_id>", methods=["GET", "POST", "DELETE"])
 @login_required
 def manage_supplier(supplier_id):
-    supplier = SupplierGateway.get_supplier_by_id(supplier_id)
+    supplier = SupplierTable.get_by_id(supplier_id)
     if not supplier:
         return "Поставщик не найден", 404
 
     if request.method == "POST":
         if request.form.get('_method') == 'DELETE':
-            SupplierGateway.delete_supplier(supplier_id)
+            SupplierTable.delete(supplier_id)
             flash("Поставщик успешно удален!", "success")
             return redirect(url_for("manage_suppliers"))
         name = request.form["name"]
         contact_info = request.form["contact_info"]
         type_of_materials = request.form["type_of_materials"]
         address = request.form["address"]
-        SupplierGateway.create_supplier(name=name, address=address, contact_info=contact_info, type_of_materials=type_of_materials)
+        SupplierTable.save(name=name, address=address, contact_info=contact_info, type_of_materials=type_of_materials)
         return redirect(url_for("manage_suppliers"))
 
     if request.method == "DELETE":
-        SupplierGateway.delete_supplier(supplier_id)
+        SupplierTable.delete(supplier_id)
         return redirect(url_for("manage_suppliers"))
 
     return render_template("manage_supplier.html", supplier=supplier)
@@ -270,18 +263,18 @@ def manage_materials():
         price = float(request.form["price"])
         manufacturer = str(request.form["manufacturer"])
         supplier_id = int(request.form["supplier_id"])
-        material = MaterialGateway.create_material(name=name, quantity=quantity, price=price, manufacturer=manufacturer,
+        material = MaterialTable.save(name=name, quantity=quantity, price=price, manufacturer=manufacturer,
                             supplier_id=supplier_id)
         return redirect(url_for("manage_materials"))
 
-    materials = MaterialGateway.get_all_materials()
+    materials = MaterialTable.get_all()
     return render_template("manage_materials.html", materials=materials)
 
 
 @app.route("/material/<int:material_id>", methods=["GET", "POST", "DELETE"])
 @login_required
 def manage_material(material_id):
-    material = MaterialGateway.get_material_by_id(material_id)
+    material = MaterialTable.get_by_id(material_id)
     if not material:
         return "Материал не найден", 404
 
@@ -294,11 +287,11 @@ def manage_material(material_id):
         price = float(request.form["price"])
         manufacturer = str(request.form["manufacturer"])
         supplier_id = int(request.form["supplier_id"])
-        MaterialGateway.create_material(name=name, quantity=quantity, price=price, manufacturer=manufacturer, supplier_id=supplier_id)
+        MaterialTable.save(name=name, quantity=quantity, price=price, manufacturer=manufacturer, supplier_id=supplier_id)
         return redirect(url_for("manage_materials"))
 
     if request.method == "DELETE":
-        MaterialGateway.delete_material(material_id)
+        MaterialTable.delete(material_id)
         return redirect(url_for("manage_materials"))
 
     return render_template("manage_material.html", material=material)
@@ -307,7 +300,7 @@ def manage_material(material_id):
 @app.route("/purchase_requests", methods=["GET", "POST"])
 @login_required
 def purchase_requests():
-    suppliers = SupplierGateway.get_all_suppliers()
+    suppliers = SupplierTable.get_all()
     if request.method == "POST":
         material = request.form["material"]
         quantity = int(request.form["quantity"])
@@ -316,21 +309,19 @@ def purchase_requests():
         status = request.form["status"]
         request_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f"material {material} quantity {quantity} price {price} supplier {supplier_id} status {status} request_date: {request_date}")
-        PurchaseRequestGateway.create_purchase_request(material=material, quantity=quantity, price=price,
+        PurchaseRequestTable.save(material=material, quantity=quantity, price=price,
                                                        supplier_id=supplier_id, status=status, request_date=request_date)
         flash("Запрос на закупку материала создан!", "success")
         return redirect(url_for("purchase_requests"))
 
-    purchase_requests = PurchaseRequestGateway.get_all_purchase_requests()
+    purchase_requests = PurchaseRequestTable.get_all()
     return render_template("purchase_requests.html", suppliers=suppliers, purchase_requests=purchase_requests)
 
 
 @app.route("/update_purchase_request/<int:request_id>", methods=["GET", "POST"])
 @login_required
 def update_purchase_request(request_id):
-    # Получаем запрос на закупку по ID
-    purchase_request = PurchaseRequestGateway.get_purchase_request_by_id(request_id)
-
+    purchase_request = PurchaseRequestTable.get_by_id(request_id)
 
     if purchase_request is None:
         return "Запрос не найден", 404
@@ -339,13 +330,12 @@ def update_purchase_request(request_id):
         # Обновляем статус запроса
         status = request.form["status"]
         qqqqq = purchase_request.supplier_id
-        print(f"purchase_request {qqqqq}")
-        manufacturer = SupplierGateway.get_supplier_by_id(qqqqq)
-        PurchaseRequestGateway.update_purchase_request(request_id, status)
+        manufacturer = SupplierTable.get_by_id(qqqqq)
+        PurchaseRequestTable.update(request_id, status)
         if status == "Закрыт":
-            MaterialGateway.create_material(name=purchase_request.material, quantity=purchase_request.quantity,
-                                            price=purchase_request.price, manufacturer=manufacturer.name,
-                                            supplier_id=qqqqq)
+            MaterialTable.save(name=purchase_request.material, quantity=purchase_request.quantity,
+                               price=purchase_request.price, manufacturer=manufacturer.name,
+                               supplier_id=qqqqq)
 
 
         flash("Статус запроса обновлен!", "success")
