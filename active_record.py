@@ -1,8 +1,8 @@
 import sqlite3
 
 from flask_login import UserMixin
-
-DB_PATH = "construction_system2222.db"
+#DB_PATH = "test.db"  # для тестов
+DB_PATH = "construction_system2222.db" # оригинад
 
 
 class ActiveRecordBase:

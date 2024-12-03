@@ -13,14 +13,9 @@ class MaterialTable:
         return Material.get_by_id(material_id)
 
     @staticmethod
-    def filter_by_name(name):
-        materials = Material.get_all()
-        return [material for material in materials if name.lower() in material.name.lower()]
-
-    @staticmethod
     def save(name, quantity, price, manufacturer, supplier_id):
-        mat = Material(name=name, quantity=quantity, price=price, manufacturer=manufacturer, supplier_id=supplier_id)
-        mat.save()
+        materials = Material(name=name, quantity=quantity, price=price, manufacturer=manufacturer, supplier_id=supplier_id)
+        materials.save()
 
     @staticmethod
     def delete(material_id):
@@ -35,11 +30,6 @@ class ConstructionObjectTable:
     @staticmethod
     def get_by_id(object_id):
         return ConstructionObject.get_by_id(object_id)
-
-    @staticmethod
-    def filter_by_status(status):
-        objects = ConstructionObject.get_all()
-        return [obj for obj in objects if obj.status.lower() == status.lower()]
 
     @staticmethod
     def save(name, address, deadline):
@@ -69,11 +59,6 @@ class ReserveEstimateTable:
         return ReserveEstimate.get_by_id(object_id)
 
     @staticmethod
-    def filter_by_object(construction_object_id):
-        reserves = ReserveEstimate.get_all()
-        return [reserve for reserve in reserves if reserve.construction_object_id == construction_object_id]
-
-    @staticmethod
     def save(
             name, quantity, price, construction_object_id,
             supplier_id, missing_material, missing_quantity,
@@ -86,10 +71,6 @@ class ReserveEstimateTable:
         )
         res_est.save()
 
-    @staticmethod
-    def delete_all(estimate_id):
-        ReserveEstimate.delete(estimate_id)
-
 
 class WorkforceTable:
     @staticmethod
@@ -99,15 +80,6 @@ class WorkforceTable:
     @staticmethod
     def get_by_id(object_id):
         return Workforce.get_by_id(object_id)
-
-    @staticmethod
-    def filter_by_object(object_id):
-        workforce_list = Workforce.get_all()
-        return [workforce for workforce in workforce_list if workforce.object_id == object_id]
-
-    @staticmethod
-    def delete(workforce_id):
-        Workforce.delete(workforce_id)
 
     @staticmethod
     def save(object_id, kval, workers, start_date, end_date):
@@ -124,11 +96,6 @@ class SupplierTable:
     @staticmethod
     def get_by_id(workforce_id):
         return Supplier.get_by_id(workforce_id)
-
-    @staticmethod
-    def filter_by_object(object_id):
-        supplier_list = Supplier.get_all()
-        return [supplier for supplier in supplier_list if supplier.object_id == object_id]
 
     @staticmethod
     def delete(supplier_id):
