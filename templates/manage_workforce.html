@@ -86,6 +86,11 @@
 
     <div class="container">
         <h1>Бригада для объекта "{{ obj.name }}"</h1>
+        {% with message = get_flashed_messages()[-1] %}
+            {% if message %}
+                <div class="danger">{{ message }}</div>
+            {% endif %}
+        {% endwith %}
         <form method="POST">
             <div class="form-group">
                 <label for="kval">Квалификация:</label>
@@ -127,6 +132,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        <h2>
+            Общее количество рабочих {{ all_worker }}
+        </h2>
 
         <button onclick="window.location.href='{{ url_for('index') }}'">Назад</button>
     </div>

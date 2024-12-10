@@ -7,7 +7,7 @@ from init_db import initialize_database
 from flask import flash
 from table_module import (
     CommentTable, PurchaseRequestTable, SupplierTable, PurchaseRequestTable,
-    WorkforceTable, ReserveEstimateTable, ConstructionObjectTable, UserTable, MaterialTable
+    WorkforceTable, ReserveEstimateTable, ConstructionObjectTable, UserTable, MaterialTable,
 )
 
 app = Flask(__name__)
@@ -23,8 +23,10 @@ login_manager.login_message = "Пожалуйста, войдите, чтобы 
 @app.route("/")
 @login_required
 def index():
-    objects = ConstructionObjectTable.get_all()
-    return render_template("index.html", objects=objects)
+    print(str(datetime.now().strftime("%Y-%m-%d")))
+    objects = ConstructionObjectTable.find_active_objects(str(datetime.now().strftime("%Y-%m-%d")))
+    end = ConstructionObjectTable.find_overdue_objects(str(datetime.now().strftime("%Y-%m-%d")))
+    return render_template("index.html", objects=objects, end=end)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -95,21 +97,6 @@ def delete_object(object_id):
 
     return redirect(url_for('index'))  # Перенаправить на главную страницу
 
-
-@app.route('/delete_workforce/<int:worforce_id>', methods=['POST'])
-@login_required
-def delete_workforce(worforce_id, object_id):
-    print(worforce_id)
-    print(f"object_id {object_id}")
-
-    WorkforceTable.delete(worforce_id)  # Удалить объект
-
-    obj = ConstructionObjectTable.get_by_id(object_id)
-    workforces = WorkforceTable.get_by_id(object_id)
-
-    return render_template("manage_workforce.html", obj=obj, workforces=workforces)
-
-
 @app.route("/api/objects", methods=["GET"])
 @login_required
 def get_objects():
@@ -170,6 +157,9 @@ def manage_estimate(object_id):
         # Перенаправление обратно на страницу
         return redirect(url_for("manage_estimate", object_id=object_id))
 
+    materials1 = MaterialTable.filter_by_price_range(1, 15)
+    print(materials1)
+
     return render_template(
         "manage_estimate.html",
         obj=obj,
@@ -201,15 +191,20 @@ def manage_workforce(object_id):
     workforces = WorkforceTable.get_by_id(object_id)  # Получаем все бригады для объекта
 
     if request.method == "POST":
-        kval = request.form["kval"]
-        workers = int(request.form["workers"])
-        start_date = request.form["start_date"]
-        end_date = request.form["end_date"]
+        try:
+            kval = request.form["kval"]
+            workers = int(request.form["workers"])
+            start_date = request.form["start_date"]
+            end_date = request.form["end_date"]
 
-        WorkforceTable.save(object_id=object_id, kval=kval, workers=workers, start_date=start_date, end_date=end_date)
-        return redirect(url_for("manage_workforce", object_id=object_id))
+            WorkforceTable.save(object_id=object_id, kval=kval, workers=workers, start_date=start_date, end_date=end_date)
+            return redirect(url_for("manage_workforce", object_id=object_id))
 
-    return render_template("manage_workforce.html", obj=obj, workforces=workforces)
+        except ValueError as e:
+            flash(f"Ошибка: {str(e)}", "danger")
+    all_worker = WorkforceTable.count_total_workers(object_id)
+
+    return render_template("manage_workforce.html", obj=obj, workforces=workforces, all_worker=all_worker)
 
 
 @app.route("/suppliers", methods=["GET", "POST"])
@@ -225,7 +220,8 @@ def manage_suppliers():
         return redirect(url_for("manage_suppliers"))
 
     suppliers = SupplierTable.get_all()
-    return render_template("manage_suppliers.html", suppliers=suppliers)
+    lens = SupplierTable.count_suppliers()
+    return render_template("manage_suppliers.html", suppliers=suppliers, lens=lens)
 
 
 @app.route("/supplier/<int:supplier_id>", methods=["GET", "POST", "DELETE"])
@@ -302,17 +298,21 @@ def manage_material(material_id):
 def purchase_requests():
     suppliers = SupplierTable.get_all()
     if request.method == "POST":
-        material = request.form["material"]
-        quantity = int(request.form["quantity"])
-        price = int(request.form["price"])
-        supplier_id = int(request.form["supplier_id"])
-        status = request.form["status"]
-        request_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"material {material} quantity {quantity} price {price} supplier {supplier_id} status {status} request_date: {request_date}")
-        PurchaseRequestTable.save(material=material, quantity=quantity, price=price,
-                                                       supplier_id=supplier_id, status=status, request_date=request_date)
-        flash("Запрос на закупку материала создан!", "success")
-        return redirect(url_for("purchase_requests"))
+        try:
+            material = request.form["material"]
+            quantity = int(request.form["quantity"])
+            price = int(request.form["price"])
+            supplier_id = int(request.form["supplier_id"])
+            status = request.form["status"]
+            request_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"material {material} quantity {quantity} price {price} supplier {supplier_id} status {status} request_date: {request_date}")
+            PurchaseRequestTable.save(material=material, quantity=quantity, price=price,
+                                                           supplier_id=supplier_id, status=status, request_date=request_date)
+            flash("Запрос на закупку материала создан!", "success")
+            return redirect(url_for("purchase_requests"))
+        except ValueError as e:
+            flash(f"Ошибка: {str(e)}", "danger")
+
 
     purchase_requests = PurchaseRequestTable.get_all()
     return render_template("purchase_requests.html", suppliers=suppliers, purchase_requests=purchase_requests)

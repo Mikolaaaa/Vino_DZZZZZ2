@@ -84,6 +84,11 @@
 
 <div class="form-container">
     <form method="POST">
+    {% with message = get_flashed_messages()[-1] %}
+            {% if message %}
+                <div class="danger">{{ message }}</div>
+            {% endif %}
+        {% endwith %}
         <label for="material">Материал:</label>
         <input type="text" id="material" name="material" required>
 

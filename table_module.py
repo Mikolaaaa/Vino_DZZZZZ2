@@ -19,7 +19,14 @@ class MaterialTable:
 
     @staticmethod
     def delete(material_id):
-        Material.delete(material_id)
+        material = Material.get_by_id(material_id)
+        material.delete()
+
+    @staticmethod
+    def calculate_total_cost():
+        """Вычисляет общую стоимость всех материалов."""
+        materials = Material.get_all()
+        return sum(material.price * material.quantity for material in materials)
 
 
 class ConstructionObjectTable:
@@ -46,7 +53,20 @@ class ConstructionObjectTable:
 
     @staticmethod
     def delete(object_id):
-        ConstructionObject.delete(object_id)
+        con_obj = ConstructionObject.get_by_id(object_id)
+        con_obj.delete()
+
+    @staticmethod
+    def find_overdue_objects(current_date):
+        """Находит объекты с просроченным сроком."""
+        objects = ConstructionObject.get_all()
+        return [obj for obj in objects if obj.deadline < current_date]
+
+    @staticmethod
+    def find_active_objects(current_date):
+        """Находит объекты с активным сроком."""
+        objects = ConstructionObject.get_all()
+        return [obj for obj in objects if obj.deadline >= current_date]
 
 
 class ReserveEstimateTable:
@@ -86,6 +106,12 @@ class WorkforceTable:
         work = Workforce(object_id=object_id, kval=kval, workers=workers, start_date=start_date, end_date=end_date)
         work.save()
 
+    @staticmethod
+    def count_total_workers(object_id):
+        """Вычисляет общее количество рабочих для объекта."""
+        workforce_list = Workforce.get_all()
+        return sum(workforce.workers for workforce in workforce_list if workforce.object_id == object_id)
+
 
 class SupplierTable:
 
@@ -99,12 +125,19 @@ class SupplierTable:
 
     @staticmethod
     def delete(supplier_id):
-        Supplier.delete(supplier_id)
+        supplier = Supplier.get_by_id(supplier_id)
+        supplier.delete()
 
     @staticmethod
     def save(name, address, contact_info, type_of_materials):
         sup = Supplier(name=name, address=address, contact_info=contact_info, type_of_materials=type_of_materials)
         sup.save()
+
+    @staticmethod
+    def count_suppliers():
+        """Подсчитывает общее количество поставщиков."""
+        suppliers = Supplier.get_all()
+        return len(suppliers)
 
 
 class CommentTable:
@@ -144,10 +177,6 @@ class PurchaseRequestTable:
     def material(request):
         PurchaseRequest.material(request)
         return MaterialTable.get_by_id(request)
-
-    @staticmethod
-    def delete(request_id):
-        PurchaseRequest.delete(request_id)
 
     @staticmethod
     def save(material, quantity, price, supplier_id, status, request_date):

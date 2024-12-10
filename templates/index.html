@@ -303,6 +303,56 @@
                 {% endfor %}
             </tbody>
         </table>
+           <h1>Список просроченных объектов</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Адрес</th>
+                    <th>Срок</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for en in end %}
+                <tr>
+                    <td>{{ en.id }}</td>
+                    <td>{{ en.name }}</td>
+                    <td>{{ en.address }}</td>
+                    <td>{{ en.deadline }}</td>
+                    <td>
+                        <form action="{{ url_for('update_status', object_id=en.id) }}" method="POST">
+                            <label>
+                                <select name="status" required>
+                                    <option value="Осмотр объекта" {% if en.status == 'Осмотр объекта' %} selected {% endif %}>Осмотр объекта</option>
+                                    <option value="Подведение света" {% if en.status == 'Подведение света' %} selected {% endif %}>Подведение света</option>
+                                    <option value="Подведение газа" {% if en.status == 'Подведение газа' %} selected {% endif %}>Подведение газа</option>
+                                    <option value="Подведение отопления" {% if en.status == 'Подведение отопления' %} selected {% endif %}>Подведение отопления</option>
+                                    <option value="Установка счетчиков" {% if en.status == 'Установка счетчиков' %} selected {% endif %}>Установка счетчиков</option>
+                                    <option value="Завершение" {% if en.status == 'Завершение' %} selected {% endif %}>Завершение</option>
+                                </select>
+                            </label>
+                            <button type="submit" class="action-btnsel">Обновить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr class="actions-row">
+                    <td colspan="6">
+                        <div class="actions">
+                            <a href="{{ url_for('manage_estimate', object_id=en.id) }}" class="action-btn">Смета</a>
+                            <a href="{{ url_for('comments', object_id=en.id) }}" class="action-btn">Комментарии</a>
+                            <a href="{{ url_for('manage_workforce', object_id=en.id) }}" class="action-btn">Рабочая сила</a>
+                            <a href="{{ url_for('manage_suppliers', object_id=en.id) }}" class="action-btn">Поставщики</a>
+                            <a href="{{ url_for('manage_materials', object_id=en.id) }}" class="action-btn">Складские материалы</a>
+                            <a href="{{ url_for('purchase_requests', object_id=en.id) }}" class="action-btn">Закупка материалов</a>
+                            <a href="{{ url_for('delete_object', object_id=en.id) }}" class="action-btn2" onclick="return confirm('Вы уверены, что хотите удалить этот объект?')">Удалить</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         <a href="javascript:void(0);" id="addObjectBtn" class="add-object">Добавить объект</a>
     </div>
 

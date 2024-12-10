@@ -2,7 +2,7 @@ import sqlite3
 
 from flask_login import UserMixin
 #DB_PATH = "test.db"  # для тестов
-DB_PATH = "construction_system2222.db" # оригинад
+DB_PATH = "construction_system2222.db"  # оригинал
 
 
 class ActiveRecordBase:
@@ -21,6 +21,9 @@ class Material(ActiveRecordBase):
         self.price = price
         self.manufacturer = manufacturer
         self.supplier_id = supplier_id
+
+    def __repr__(self):
+        return f"<Material(id={self.id}, name='{self.name}', quantity={self.quantity}, price={self.price}, manufacturer='{self.manufacturer}', supplier_id={self.supplier_id})>"
 
     @staticmethod
     def from_row(row):
@@ -67,10 +70,10 @@ class Material(ActiveRecordBase):
         conn.commit()
         conn.close()
 
-    def delete(material_id):
+    def delete(self):
         conn = Material.connect()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM materials WHERE id = ?", (material_id,))
+        cursor.execute("DELETE FROM materials WHERE id = ?", (self.id,))
         conn.commit()
         conn.close()
 
@@ -128,10 +131,10 @@ class ConstructionObject(ActiveRecordBase):
         conn.commit()
         conn.close()
 
-    def delete(object_id):
+    def delete(self):
         conn = ConstructionObject.connect()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM construction_objects WHERE id = ?", (object_id,))
+        cursor.execute("DELETE FROM construction_objects WHERE id = ?", (self.id,))
         conn.commit()
         conn.close()
 
@@ -200,13 +203,6 @@ class ReserveEstimate(ActiveRecordBase):
         conn.commit()
         conn.close()
 
-    def delete(self):
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM reserve_estimates WHERE id = ?", (self.id,))
-        conn.commit()
-        conn.close()
-
 
 class Workforce(ActiveRecordBase):
     def __init__(self, id=None, object_id=None, kval=None, workers=None, start_date=None, end_date=None):
@@ -242,9 +238,15 @@ class Workforce(ActiveRecordBase):
         conn.close()
         return [Workforce.from_row(row) for row in rows]
 
+    def validate(self):
+        """Валидация данных перед сохранением"""
+        if self.workers < 0:
+            raise ValueError("Количество рабочих не может быть отрицательным.")
+
     def save(self):
         conn = self.connect()
         cursor = conn.cursor()
+        self.validate()
         if self.id:
             cursor.execute("""
                 UPDATE workforce 
@@ -259,13 +261,6 @@ class Workforce(ActiveRecordBase):
                            (self.object_id, self.kval, self.workers, self.start_date, self.end_date)
                            )
             self.id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-
-    def delete(self):
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM workforce WHERE id = ?", (self.id,))
         conn.commit()
         conn.close()
 
@@ -323,10 +318,10 @@ class Supplier(ActiveRecordBase):
         conn.commit()
         conn.close()
 
-    def delete(supplier_id):
+    def delete(self):
         conn = Supplier.connect()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM suppliers WHERE id = ?", (supplier_id,))
+        cursor.execute("DELETE FROM suppliers WHERE id = ?", (self.id,))
         conn.commit()
         conn.close()
 
@@ -390,9 +385,15 @@ class PurchaseRequest(ActiveRecordBase):
     def material(self):
         return Material.get_by_id(self.material)
 
+    def validate(self):
+        """Валидация данных перед сохранением"""
+        if self.price < 0 or self.quantity < 0:
+            raise ValueError("Цена и/или количество материалов не может быть отрицательным.")
+
     def save(self):
         conn = self.connect()
         cursor = conn.cursor()
+        self.validate()
         if self.id:
             cursor.execute("""
                 UPDATE purchase_requests 
@@ -427,13 +428,6 @@ class PurchaseRequest(ActiveRecordBase):
         row = cursor.fetchone()
         conn.close()
         return PurchaseRequest.from_row(row) if row else None
-
-    def delete(self):
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM purchase_requests WHERE id = ?", (self.id,))
-        conn.commit()
-        conn.close()
 
 
 class User(ActiveRecordBase, UserMixin):
