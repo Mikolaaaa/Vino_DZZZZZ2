@@ -191,17 +191,14 @@ def manage_workforce(object_id):
     workforces = WorkforceTable.get_by_id(object_id)  # Получаем все бригады для объекта
 
     if request.method == "POST":
-        try:
-            kval = request.form["kval"]
-            workers = int(request.form["workers"])
-            start_date = request.form["start_date"]
-            end_date = request.form["end_date"]
+        kval = request.form["kval"]
+        workers = int(request.form["workers"])
+        start_date = request.form["start_date"]
+        end_date = request.form["end_date"]
 
-            WorkforceTable.save(object_id=object_id, kval=kval, workers=workers, start_date=start_date, end_date=end_date)
-            return redirect(url_for("manage_workforce", object_id=object_id))
+        WorkforceTable.save(object_id=object_id, kval=kval, workers=workers, start_date=start_date, end_date=end_date)
+        return redirect(url_for("manage_workforce", object_id=object_id))
 
-        except ValueError as e:
-            flash(f"Ошибка: {str(e)}", "danger")
     all_worker = WorkforceTable.count_total_workers(object_id)
 
     return render_template("manage_workforce.html", obj=obj, workforces=workforces, all_worker=all_worker)
